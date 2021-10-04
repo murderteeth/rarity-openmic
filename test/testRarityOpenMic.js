@@ -3,6 +3,7 @@ const { smock } = require("@defi-wonderland/smock");
 const isSvg = require('is-svg');
 const { classes } = require("../rarityjs/classes");
 const { skills } = require("../rarityjs/skills");
+const { ethers } = require("hardhat");
 
 describe("RarityOpenMic", function () {
   beforeEach(async function () {
@@ -259,6 +260,37 @@ describe("RarityOpenMic", function () {
       expect(tokenJson.name).to.eq("prize #1");
       expect(tokenJson.description).to.eq("Rare prize from RarityOpenMic");
       expect(isSvg(tokenSvg)).to.be.true;
+    }
+
+  });
+
+  it("rejects non-owner prize transfers", async function () {
+    const signers = await ethers.getSigners();
+    const defaultWallet = signers[0];
+    const randoWallet = signers[2];
+
+    await this.random.setMockResult(1);
+
+    const summoner = (await this.rarity.next_summoner()).toNumber();
+    await this.rarity.summon(classes.bard);
+    await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
+    await this.rarity.setVariable("level", { [summoner]: 2 });
+
+    const skillPoints = Array(36).fill(0);
+    skillPoints[skills.perform] = 5;
+    await this.skills.set_skills(summoner, skillPoints);
+
+    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const { tokenId } = performance.events[2].args;
+
+    {
+      const rarity = this.rarity.connect(randoWallet);
+      const rarityOpenMic = this.rarityOpenMic.connect(randoWallet);
+      const summoner2 = (await rarity.next_summoner()).toNumber();
+      await rarity.summon(classes.bard);
+
+      const safeTransferFrom = rarityOpenMic["safeTransferFrom(uint256,uint256,uint256)"];
+      await expect(safeTransferFrom(summoner, summoner2, tokenId)).to.be.reverted
     }
 
   });
