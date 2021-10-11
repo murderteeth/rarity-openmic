@@ -265,10 +265,6 @@ describe("RarityOpenMic", function () {
   });
 
   it("rejects non-owner prize transfers", async function () {
-    const signers = await ethers.getSigners();
-    const defaultWallet = signers[0];
-    const randoWallet = signers[2];
-
     await this.random.setMockResult(1);
 
     const summoner = (await this.rarity.next_summoner()).toNumber();
@@ -284,6 +280,11 @@ describe("RarityOpenMic", function () {
     const { tokenId } = performance.events[2].args;
 
     {
+      const signers = await ethers.getSigners();
+      const defaultWallet = signers[0];
+      const randoWallet = signers[2];
+      expect(defaultWallet.address).to.not.eq(randoWallet.address);
+
       const rarity = this.rarity.connect(randoWallet);
       const rarityOpenMic = this.rarityOpenMic.connect(randoWallet);
       const summoner2 = (await rarity.next_summoner()).toNumber();
@@ -291,6 +292,9 @@ describe("RarityOpenMic", function () {
 
       const safeTransferFrom = rarityOpenMic["safeTransferFrom(uint256,uint256,uint256)"];
       await expect(safeTransferFrom(summoner, summoner2, tokenId)).to.be.reverted
+
+      const transferFrom = rarityOpenMic["transferFrom(uint256,uint256,uint256)"];
+      await expect(transferFrom(summoner, summoner2, tokenId)).to.be.reverted
     }
 
   });
