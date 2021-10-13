@@ -159,14 +159,16 @@ contract RarityOpenMic is ERC721Enumerable {
 
     if(success) {
       uint tokenId = safeMint(summoner);
-      uint prize = uint16(dn(summoner, doorPrizes.length - 1));
+      uint random = uint(keccak256(abi.encodePacked(block.timestamp, tokenId)));
+      uint prize = uint16(random % doorPrizes.length);
       tokens[tokenId] = Prize(false, prize);
       emit PrizeAwarded(summoner, tokenId);
     }
 
     if(crit) {
       uint tokenId = safeMint(summoner);
-      uint prize = uint16(dn(summoner, rarePrizes.length - 1));
+      uint random = uint(keccak256(abi.encodePacked(block.timestamp, tokenId)));
+      uint prize = uint16(random % rarePrizes.length);
       tokens[tokenId] = Prize(true, prize);
       emit PrizeAwarded(summoner, tokenId);
     }
