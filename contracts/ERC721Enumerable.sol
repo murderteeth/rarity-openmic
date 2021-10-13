@@ -102,7 +102,8 @@ contract ERC721 is IERC721 {
         uint256 tokenId
     ) public virtual override {
         //solhint-disable-next-line max-line-length
-        require(_isApprovedOrOwner(from, tokenId), "ERC721: transfer caller is not owner nor approved");
+        uint sender = uint256(uint160(address(msg.sender)));
+        require(_isApprovedOrOwner(sender, tokenId), "ERC721: transfer caller is not owner nor approved");
         _transfer(from, to, tokenId);
     }
 
