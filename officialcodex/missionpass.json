@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "class": "Open Mic Swag",
+    "name": "Secret mission pass from Prince Andre",
+    "description": "The envelope feels hot...",
+    "cost": 500,
+    "weight": 0
+  },
+  {
+    "id": "2",
+    "class": "Open Mic Swag",
+    "name": "Secret mission pass from The Austrian",
+    "description": "The envelope feels cold...",
+    "cost": 500,
+    "weight": 0
+  },
+  {
+    "id": "3",
+    "class": "Open Mic Swag",
+    "name": "Secret mission pass from Murderteeth",
+    "description": "The envelope feels just right...",
+    "cost": 500,
+    "weight": 0
+  }
+]
