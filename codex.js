@@ -76,9 +76,6 @@ async function main() {
     await fs.promises.writeFile(path, lines.join('\n'))
     console.log('🤖 Write codex ' + path)
   }
-
-  // console.log(Object.keys(array.reduce((r,{age}) => (r[age]='', r) , {})))
-  // const distinctItems = [...new Map(array.map(item => [item["age"], item])).values()];
   console.log('🤖 Done')
 }
 

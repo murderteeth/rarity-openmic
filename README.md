@@ -40,6 +40,15 @@ Your bard rolls a Perform skill check with these outcomes:
 
 `RarityOpenMic.getPrizes(summoner)`
 
+### V1 Vuln
+Version one of Open Mic had a vulnerability that would allow arbitrary transfer of prizes between summoners:
+
+This vulnerability was not exploited. It's been patched here:
+
+I reminted all prizes manually by calling this v2 function:
+
+
+
 ### Dev
 Setup like this
 ```

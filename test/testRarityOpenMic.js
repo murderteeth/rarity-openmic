@@ -5,7 +5,7 @@ const { classes } = require("../rarityjs/classes");
 const { skills } = require("../rarityjs/skills");
 const { ethers } = require("hardhat");
 
-describe("RarityOpenMic", function () {
+describe("rarityOpenMicV2", function () {
   beforeEach(async function () {
     this.rarity = await (await smock.mock("contracts/rarity/rarity.sol:rarity")).deploy();
     this.attributes = await (await smock.mock("contracts/rarity/rarity_attributes.sol:rarity_attributes")).deploy();
@@ -25,6 +25,13 @@ describe("RarityOpenMic", function () {
       this.rarity.address, 
       this.theRarityForest.address);
     await this.theRarityForestV2.deployed();
+    this.rarityXpProxy = await (await ethers.getContractFactory("rarity_xp_proxy")).deploy();
+    this.theRarityForestV3 = await (await ethers.getContractFactory("TheRarityForestV3")).deploy(
+      this.rarity.address, 
+      this.theRarityForest.address,
+      this.theRarityForestV2.address,
+      this.rarityXpProxy.address);
+    await this.theRarityForestV3.deployed();
 
     this.rarityOpenMic = await (await ethers.getContractFactory("RarityOpenMic")).deploy(
       this.rarity.address,
@@ -33,21 +40,27 @@ describe("RarityOpenMic", function () {
       this.random.address,
       this.theRarityForestV2.address);
 
-    await this.rarityOpenMic.deployed();
+    this.rarityOpenMicV2 = await (await ethers.getContractFactory("RarityOpenMicV2")).deploy(
+      this.rarity.address,
+      this.attributes.address,
+      this.skills.address,
+      this.random.address,
+      this.theRarityForestV3.address,
+      this.rarityOpenMic.address);
   });
 
   it("rejects non-bards", async function () {
     const summoner = await this.rarity.next_summoner();
     await this.rarity.summon(classes.barbarian);
     await this.rarity.setVariable("level", { [summoner]: 10 });
-    await expect(this.rarityOpenMic.perform(summoner)).to.be.reverted;
+    await expect(this.rarityOpenMicV2.perform(summoner)).to.be.reverted;
   });
 
   it("rejects low level scum", async function () {
     const summoner = await this.rarity.next_summoner();
     await this.rarity.summon(classes.bard);
     expect((await this.rarity.summoner(summoner))._level).to.eq(1);
-    await expect(this.rarityOpenMic.perform(summoner)).to.be.reverted;
+    await expect(this.rarityOpenMicV2.perform(summoner)).to.be.reverted;
   });
 
   it("fails if a bard has zero perform skill", async function () {
@@ -55,7 +68,7 @@ describe("RarityOpenMic", function () {
     await this.rarity.summon(classes.bard);
     await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
     await this.rarity.setVariable("level", { [summoner]: 2 });
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(1);
     const { check, success } = performance.events[0].args;
     expect(check.toNumber()).to.be.eq(0);
@@ -74,7 +87,7 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(1);
     const { check, success } = performance.events[0].args;
     expect(check.toNumber()).to.be.eq(1);
@@ -94,19 +107,19 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(3);
     const { check, success } = performance.events[0].args;
     expect(check.toNumber()).to.be.gt(1);
     expect(success).to.be.true;
 
     const { tokenId: doorPrizeId } = performance.events[2].args;
-    const prizes = await this.rarityOpenMic.getPrizes(summoner);
+    const prizes = await this.rarityOpenMicV2.getPrizes(summoner);
     expect(prizes).to.have.lengthOf(1);
     expect(prizes[0].tokenId.toString()).to.eq(doorPrizeId.toString());
     expect(prizes[0].rare).to.be.false;
 
-    const log = await this.rarityOpenMic.getPerformance(summoner);
+    const log = await this.rarityOpenMicV2.getPerformance(summoner);
     expect(log.success).to.be.true;
     expect(log.blockTime).to.be.gt(0);
 
@@ -124,7 +137,7 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(5);
     const { check, success } = performance.events[0].args;
     expect(check.toNumber()).to.be.gt(1);
@@ -132,14 +145,14 @@ describe("RarityOpenMic", function () {
 
     const { tokenId: doorPrizeId } = performance.events[2].args;
     const { tokenId: rarePrizeId } = performance.events[4].args;
-    const prizes = await this.rarityOpenMic.getPrizes(summoner);
+    const prizes = await this.rarityOpenMicV2.getPrizes(summoner);
     expect(prizes).to.have.lengthOf(2);
     expect(prizes[0].tokenId.toString()).to.eq(doorPrizeId.toString());
     expect(prizes[0].rare).to.be.false;
     expect(prizes[1].tokenId.toString()).to.eq(rarePrizeId.toString());
     expect(prizes[1].rare).to.be.true;
 
-    const log = await this.rarityOpenMic.getPerformance(summoner);
+    const log = await this.rarityOpenMicV2.getPerformance(summoner);
     expect(log.success).to.be.true;
     expect(log.blockTime).to.be.gt(0);
 
@@ -157,15 +170,15 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    let performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    let performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(3);
     let check = performance.events[0].args.check;
     expect(check.toNumber()).to.be.eq(11);
 
-    await this.theRarityForestV2.startResearch(summoner, 4);
+    await this.theRarityForestV3.startResearch(summoner, 4);
     await network.provider.send("evm_increaseTime", [2 * (4 * 24 * 60 * 60)]);
-    await this.theRarityForestV2.discover(summoner);
-    performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    await this.theRarityForestV3.discover(summoner);
+    performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     expect(performance.events).to.have.lengthOf(3);
     check = performance.events[0].args.check;
     expect(check.toNumber()).to.be.eq(12);
@@ -184,17 +197,17 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    await this.rarityOpenMic.perform(summoner);
+    await this.rarityOpenMicV2.perform(summoner);
     await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    await this.rarityOpenMic.perform(summoner);
-    await expect(this.rarityOpenMic.perform(summoner)).to.be.reverted;
+    await this.rarityOpenMicV2.perform(summoner);
+    await expect(this.rarityOpenMicV2.perform(summoner)).to.be.reverted;
     await network.provider.send("evm_increaseTime", [6 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    await expect(this.rarityOpenMic.perform(summoner)).to.be.reverted;
+    await expect(this.rarityOpenMicV2.perform(summoner)).to.be.reverted;
     await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    await this.rarityOpenMic.perform(summoner);
+    await this.rarityOpenMicV2.perform(summoner);
 
   });
 
@@ -210,21 +223,21 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    expect((await this.rarityOpenMic.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
-    await this.rarityOpenMic.perform(summoner);
-    expect((await this.rarityOpenMic.timeToNextPerformance(summoner)).toNumber()).to.eq(7 * 24 * 60 * 60);
+    expect((await this.rarityOpenMicV2.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
+    await this.rarityOpenMicV2.perform(summoner);
+    expect((await this.rarityOpenMicV2.timeToNextPerformance(summoner)).toNumber()).to.eq(7 * 24 * 60 * 60);
 
     await network.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    expect((await this.rarityOpenMic.timeToNextPerformance(summoner)).toNumber()).to.eq(5 * 24 * 60 * 60);
+    expect((await this.rarityOpenMicV2.timeToNextPerformance(summoner)).toNumber()).to.eq(5 * 24 * 60 * 60);
 
     await network.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    expect((await this.rarityOpenMic.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
+    expect((await this.rarityOpenMicV2.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
 
     await network.provider.send("evm_increaseTime", [100 * 24 * 60 * 60]);
     await network.provider.send("evm_mine");
-    expect((await this.rarityOpenMic.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
+    expect((await this.rarityOpenMicV2.timeToNextPerformance(summoner)).toNumber()).to.eq(0);
 
   });
 
@@ -240,11 +253,11 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
 
     {
       const { tokenId } = performance.events[2].args;
-      const tokenUri = await this.rarityOpenMic.tokenURI(tokenId);
+      const tokenUri = await this.rarityOpenMicV2.tokenURI(tokenId);
       const tokenJson = JSON.parse(Buffer.from(tokenUri.split(',')[1], "base64").toString());
       const tokenSvg = Buffer.from(tokenJson.image.split(',')[1], "base64").toString();
       expect(tokenJson.name).to.eq("prize #0");
@@ -254,7 +267,7 @@ describe("RarityOpenMic", function () {
 
     {
       const { tokenId } = performance.events[4].args;
-      const tokenUri = await this.rarityOpenMic.tokenURI(tokenId);
+      const tokenUri = await this.rarityOpenMicV2.tokenURI(tokenId);
       const tokenJson = JSON.parse(Buffer.from(tokenUri.split(',')[1], "base64").toString());
       const tokenSvg = Buffer.from(tokenJson.image.split(',')[1], "base64").toString();
       expect(tokenJson.name).to.eq("prize #1");
@@ -276,7 +289,7 @@ describe("RarityOpenMic", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
     const { tokenId } = performance.events[2].args;
 
     {
@@ -286,14 +299,11 @@ describe("RarityOpenMic", function () {
       expect(defaultWallet.address).to.not.eq(randoWallet.address);
 
       const rarity = this.rarity.connect(randoWallet);
-      const rarityOpenMic = this.rarityOpenMic.connect(randoWallet);
+      const rarityOpenMicV2 = this.rarityOpenMicV2.connect(randoWallet);
       const summoner2 = (await rarity.next_summoner()).toNumber();
       await rarity.summon(classes.bard);
 
-      const safeTransferFrom = rarityOpenMic["safeTransferFrom(uint256,uint256,uint256)"];
-      await expect(safeTransferFrom(summoner, summoner2, tokenId)).to.be.reverted
-
-      const transferFrom = rarityOpenMic["transferFrom(uint256,uint256,uint256)"];
+      const transferFrom = rarityOpenMicV2["transferFrom(uint256,uint256,uint256)"];
       await expect(transferFrom(summoner, summoner2, tokenId)).to.be.reverted
     }
 
