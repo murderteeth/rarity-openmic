@@ -119,7 +119,7 @@ contract RarityOpenMicV2 is ERC721Enumerable {
     performances[summoner] = Performance(block.timestamp, success);
     emit Perform(msg.sender, summoner, check, success, crit);
 
-    if(success) {
+    if(success && !crit) {
       uint tokenId = safeMint(summoner);
       uint random = uint(keccak256(abi.encodePacked(block.timestamp, tokenId)));
       uint prize = uint16(random % doorPrizes.length);

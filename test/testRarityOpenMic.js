@@ -125,7 +125,7 @@ describe("rarityOpenMicV2", function () {
 
   });
 
-  it("also awards a rare prize to bards that crit their performance", async function () {
+  it("awards a rare prize to bards that crit their performance", async function () {
     await this.random.setMockResult(19);
 
     const summoner = (await this.rarity.next_summoner()).toNumber();
@@ -138,19 +138,16 @@ describe("rarityOpenMicV2", function () {
     await this.skills.set_skills(summoner, skillPoints);
 
     const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
-    expect(performance.events).to.have.lengthOf(5);
+    expect(performance.events).to.have.lengthOf(3);
     const { check, success } = performance.events[0].args;
     expect(check.toNumber()).to.be.gt(1);
     expect(success).to.be.true;
 
-    const { tokenId: doorPrizeId } = performance.events[2].args;
-    const { tokenId: rarePrizeId } = performance.events[4].args;
+    const { tokenId } = performance.events[2].args;
     const prizes = await this.rarityOpenMicV2.getPrizes(summoner);
-    expect(prizes).to.have.lengthOf(2);
-    expect(prizes[0].tokenId.toString()).to.eq(doorPrizeId.toString());
-    expect(prizes[0].rare).to.be.false;
-    expect(prizes[1].tokenId.toString()).to.eq(rarePrizeId.toString());
-    expect(prizes[1].rare).to.be.true;
+    expect(prizes).to.have.lengthOf(1);
+    expect(prizes[0].tokenId.toString()).to.eq(tokenId.toString());
+    expect(prizes[0].rare).to.be.true;
 
     const log = await this.rarityOpenMicV2.getPerformance(summoner);
     expect(log.success).to.be.true;
@@ -242,8 +239,6 @@ describe("rarityOpenMicV2", function () {
   });
 
   it("makes valid token uris", async function () {
-    await this.random.setMockResult(19);
-
     const summoner = (await this.rarity.next_summoner()).toNumber();
     await this.rarity.summon(classes.bard);
     await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
@@ -253,10 +248,16 @@ describe("rarityOpenMicV2", function () {
     skillPoints[skills.perform] = 5;
     await this.skills.set_skills(summoner, skillPoints);
 
-    const performance = await (await this.rarityOpenMicV2.perform(summoner)).wait();
+    await this.random.setMockResult(1);
+    await (await this.rarityOpenMicV2.perform(summoner)).wait();
+    await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+    await network.provider.send("evm_mine");
+    await this.random.setMockResult(19);
+    await (await this.rarityOpenMicV2.perform(summoner)).wait();
 
+    const prizes = await this.rarityOpenMicV2.getPrizes(summoner);
     {
-      const { tokenId } = performance.events[2].args;
+      const { tokenId } = prizes[0];
       const tokenUri = await this.rarityOpenMicV2.tokenURI(tokenId);
       const tokenJson = JSON.parse(Buffer.from(tokenUri.split(',')[1], "base64").toString());
       const tokenSvg = Buffer.from(tokenJson.image.split(',')[1], "base64").toString();
@@ -266,7 +267,7 @@ describe("rarityOpenMicV2", function () {
     }
 
     {
-      const { tokenId } = performance.events[4].args;
+      const { tokenId } = prizes[1];
       const tokenUri = await this.rarityOpenMicV2.tokenURI(tokenId);
       const tokenJson = JSON.parse(Buffer.from(tokenUri.split(',')[1], "base64").toString());
       const tokenSvg = Buffer.from(tokenJson.image.split(',')[1], "base64").toString();
