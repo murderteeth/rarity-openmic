@@ -40,14 +40,6 @@ Your bard rolls a Perform skill check with these outcomes:
 
 `RarityOpenMic.getPrizes(summoner)`
 
-### V1 Vuln
-Version one of Open Mic had a vulnerability that would allow arbitrary transfer of prizes between summoners:
-
-This vulnerability was not exploited. It's been patched here:
-
-I reminted all prizes manually by calling this v2 function:
-
-
 
 ### Dev
 Setup like this
@@ -74,3 +66,12 @@ Deploy like this
 ```
 npx hardhat run scripts/deploy.js --network testnet
 ```
+
+- - -
+
+### ⚠ V1 Vuln
+Version one of Open Mic had a vulnerability that would allow arbitrary transfer of prizes between summoners:
+https://github.com/murderteeth/rarity-openmic/blob/3137bda0efded0eec35f1d0ac63e5e5dabb4bc26/contracts/ERC721Enumerable.sol#L105
+
+This vulnerability was not exploited and the vulnerable function has been removed. All V1 prizes will be reminted by manually calling this v2 function:
+
