@@ -34,8 +34,10 @@ module.exports = {
   gasReporter: {
     excludeContracts: 
       ["rarity.sol", 
+      "rarity_xp_proxy",
       "theRarityForest.sol", 
       "theRarityForestV2.sol", 
+      "TheRarityForestV3",
       "codex_base_random_mockable.sol",
       "codex_skills.sol",
       "rarity_attributes.sol",

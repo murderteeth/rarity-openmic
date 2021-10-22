@@ -295,17 +295,103 @@ describe("rarityOpenMicV2", function () {
     {
       const signers = await ethers.getSigners();
       const defaultWallet = signers[0];
-      const randoWallet = signers[2];
-      expect(defaultWallet.address).to.not.eq(randoWallet.address);
+      const nonOwnerWallet = signers[2];
+      expect(defaultWallet.address).to.not.eq(nonOwnerWallet.address);
 
-      const rarity = this.rarity.connect(randoWallet);
-      const rarityOpenMicV2 = this.rarityOpenMicV2.connect(randoWallet);
+      const rarity = this.rarity.connect(nonOwnerWallet);
+      const rarityOpenMicV2 = this.rarityOpenMicV2.connect(nonOwnerWallet);
       const summoner2 = (await rarity.next_summoner()).toNumber();
       await rarity.summon(classes.bard);
 
       const transferFrom = rarityOpenMicV2["transferFrom(uint256,uint256,uint256)"];
       await expect(transferFrom(summoner, summoner2, tokenId)).to.be.reverted
     }
+
+  });
+
+  it("remints prizes, v1 to v2", async function () {
+    await this.random.setMockResult(19);
+
+    const summoner = (await this.rarity.next_summoner()).toNumber();
+    await this.rarity.summon(classes.bard);
+    await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
+    await this.rarity.setVariable("level", { [summoner]: 2 });
+
+    const skillPoints = Array(36).fill(0);
+    skillPoints[skills.perform] = 5;
+    await this.skills.set_skills(summoner, skillPoints);
+
+    const performance = await (await this.rarityOpenMic.perform(summoner)).wait();
+    expect(performance.events).to.have.lengthOf(5);
+    const { check, success } = performance.events[0].args;
+    const { tokenId: doorPrizeId } = performance.events[2].args;
+    const { tokenId: rarePrizeId } = performance.events[4].args;
+    expect(check.toNumber()).to.be.gt(1);
+    expect(success).to.be.true;
+
+    expect(await this.rarityOpenMicV2.getPrizes(summoner)).to.be.empty;
+
+    await this.rarityOpenMicV2.remintV1Prizes(doorPrizeId, rarePrizeId);
+
+    const prizes = await this.rarityOpenMicV2.getPrizes(summoner);
+    expect(prizes).to.have.lengthOf(2);
+    expect(prizes[0].tokenId.toString()).to.eq(doorPrizeId.toString());
+    expect(prizes[0].rare).to.be.false;
+    expect(prizes[1].tokenId.toString()).to.eq(rarePrizeId.toString());
+    expect(prizes[1].rare).to.be.true;
+
+  });
+
+  it("reverts remints from non owner", async function () {
+    await this.random.setMockResult(19);
+
+    const summoner = (await this.rarity.next_summoner()).toNumber();
+    await this.rarity.summon(classes.bard);
+    await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
+    await this.rarity.setVariable("level", { [summoner]: 2 });
+
+    const skillPoints = Array(36).fill(0);
+    skillPoints[skills.perform] = 5;
+    await this.skills.set_skills(summoner, skillPoints);
+    await this.rarityOpenMic.perform(summoner);
+
+    const signers = await ethers.getSigners();
+    const nonOwnerWallet = signers[2];
+    await this.rarityOpenMicV2.remintV1Prizes(0, 1);
+    await this.rarityOpenMicV2.remintV1Prizes(0, 1);
+    const rarityOpenMicV2 = this.rarityOpenMicV2.connect(nonOwnerWallet);
+    await expect(rarityOpenMicV2.remintV1Prizes(0, 1)).to.be.reverted;
+
+  });
+
+  it("reverts closeV1Remint from non owner", async function () {
+    const signers = await ethers.getSigners();
+    const nonOwnerWallet = signers[2];
+
+    await this.rarityOpenMicV2.closeV1Remint();
+    await this.rarityOpenMicV2.closeV1Remint();
+    const rarityOpenMicV2 = this.rarityOpenMicV2.connect(nonOwnerWallet);
+    await expect(rarityOpenMicV2.closeV1Remint()).to.be.reverted;
+
+  });
+
+  it("reverts remint after closeV1Remint", async function () {
+    await this.random.setMockResult(19);
+
+    const summoner = (await this.rarity.next_summoner()).toNumber();
+    await this.rarity.summon(classes.bard);
+    await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
+    await this.rarity.setVariable("level", { [summoner]: 2 });
+
+    const skillPoints = Array(36).fill(0);
+    skillPoints[skills.perform] = 5;
+    await this.skills.set_skills(summoner, skillPoints);
+    await this.rarityOpenMic.perform(summoner);
+
+    await this.rarityOpenMicV2.remintV1Prizes(0, 1);
+    await this.rarityOpenMicV2.remintV1Prizes(0, 1);
+    await this.rarityOpenMicV2.closeV1Remint();
+    await expect(this.rarityOpenMicV2.remintV1Prizes(0, 1)).to.be.reverted;
 
   });
 

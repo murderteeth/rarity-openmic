@@ -189,6 +189,28 @@ contract RarityOpenMicV2 is ERC721Enumerable {
     tokenCounter.increment();
   }
 
+  bool public v1RemintOpen = true;
+
+  function remintV1Prizes(uint fromTokenId, uint toTokenId) public ownerOnly {
+    require(v1RemintOpen, "Remint closed");
+    uint limit = toTokenId + 1;
+    for (uint tokenId = fromTokenId; tokenId < limit; tokenId++) {
+      uint summoner = openmicV1.ownerOf(tokenId);
+      PrizeView[] memory prizes = openmicV1.getPrizes(summoner);
+      for (uint p = 0; p < prizes.length; p++) {
+        PrizeView memory prize = prizes[p];
+        if(prize.tokenId == tokenId) {
+          uint newTokenId = safeMint(summoner);
+          tokens[newTokenId] = Prize(prize.rare, prize.index);
+        }
+      }
+    }
+  }
+
+  function closeV1Remint() public ownerOnly {
+    v1RemintOpen = false;
+  }
+
   function tokenURI(uint256 tokenId) public view returns (string memory) {
     Prize memory prize = tokens[tokenId];
     string memory _name;
