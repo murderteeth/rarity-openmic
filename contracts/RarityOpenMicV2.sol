@@ -90,17 +90,21 @@ contract RarityOpenMicV2 is ERC721Enumerable {
     }
   }
 
+  function getPrize(uint tokenId) public view returns (PrizeView memory) {
+    Prize memory prize = tokens[tokenId];
+    if(prize.rare) {
+      return PrizeView(tokenId, true, prize.index, rarePrizes[prize.index]);
+    } else {
+      return PrizeView(tokenId, false, prize.index, doorPrizes[prize.index]);
+    }
+  }
+
   function getPrizes(uint summoner) public view returns (PrizeView[] memory) {
     uint arrayLength = balanceOf(summoner);
     PrizeView[] memory result = new PrizeView[](arrayLength);
     for (uint i = 0; i < arrayLength; i++) {
       uint tokenId = tokenOfOwnerByIndex(summoner, i);
-      Prize memory prize = tokens[tokenId];
-      if(prize.rare) {
-        result[i] = PrizeView(tokenId, true, prize.index, rarePrizes[prize.index]);
-      } else {
-        result[i] = PrizeView(tokenId, false, prize.index, doorPrizes[prize.index]);
-      }
+      result[i] = getPrize(tokenId);
     }
     return result;
   }
