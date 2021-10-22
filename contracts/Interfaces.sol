@@ -30,19 +30,19 @@ struct ForestTreasure {
   uint256 level;
 }
 
-  struct Performance {
-    uint blockTime;
-    bool success;
-  }
+struct Performance {
+  uint blockTime;
+  bool success;
+}
 
-  struct Prize {
-    bool rare;
-    uint index;
-  }
+struct Prize {
+  bool rare;
+  uint index;
+}
 
-  struct PrizeView {
-    uint tokenId;
-    bool rare;
-    uint index;
-    string name;
-  }
+struct PrizeView {
+  uint tokenId;
+  bool rare;
+  uint index;
+  string name;
+}

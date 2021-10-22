@@ -43,18 +43,18 @@ contract RarityOpenMicV2 is ERC721Enumerable {
   Counters.Counter public tokenCounter;
 
   string[] public doorPrizes = [
-    "Signet ring of the Hawk",
-    "Signet ring of the Badger",
-    "Signet ring of the Song Bird",
-    "Signet ring of the Skunk",
-    "Signet ring of the Cat",
-    "Signet ring of the Dog",
-    "Signet ring of the Fish",
-    "Signet ring of the Shark",
-    "Signet ring of the Lion",
-    "Signet ring of the Tiger",
-    "Signet ring of the Snake",
-    "Crate of Goblin Wine",
+    "Hawk signet ring",
+    "Badger signet ring",
+    "Song Bird signet ring",
+    "Skunk signet ring",
+    "Cat signet ring",
+    "Dog signet ring",
+    "Fish signet ring",
+    "Shark signet ring",
+    "Lion signet ring",
+    "Tiger signet ring",
+    "Snake signet ring",
+    "Crate of goblin wine",
     "Expired rations",
     "Mysterious black stone"
   ];
