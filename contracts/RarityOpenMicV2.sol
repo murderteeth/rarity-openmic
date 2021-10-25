@@ -141,6 +141,24 @@ contract RarityOpenMicV2 is ERC721Enumerable {
 
   }
 
+  function odds(uint summoner) public view returns (int) {
+    (,,uint class,uint level) = rarity.summoner(summoner);
+    if(class != 2) return (0);
+    if(level < 2) return (0);
+
+    int performSkill = int(uint(skills.get_skills(summoner)[perform_skill]));
+    if(performSkill < 1) return (0);
+
+    (,,,,,uint CHA) = attributes.ability_scores(summoner);
+    int bonus = performSkill + calcModifier(CHA) + int(calcForestModifier(summoner));
+    int d = 20;
+    int upperBound = 10e17;
+    int actual = 10e17 * (int(difficultyClass) + bonus) / d;
+
+    if(actual > upperBound) return (upperBound);
+    return (actual);
+  }
+
   function skillCheck(uint summoner, uint dc, uint skill) internal view returns (int check, bool success, bool crit) {
     check = int(uint(skills.get_skills(summoner)[skill]));
     if(check == 0) return (0, false, false);

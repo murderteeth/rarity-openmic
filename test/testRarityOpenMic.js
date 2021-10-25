@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { smock } = require("@defi-wonderland/smock");
 const isSvg = require('is-svg');
+const { utils } = require('ethers');
 const { classes } = require("../rarityjs/classes");
 const { skills } = require("../rarityjs/skills");
 const { ethers } = require("hardhat");
@@ -416,6 +417,55 @@ describe("rarityOpenMicV2", function () {
     await this.rarityOpenMicV2.closeV1Remint();
     await expect(this.rarityOpenMicV2.remintV1Prizes(0, 1)).to.be.reverted;
 
+  });
+
+  it("calculates odds", async function () {
+    {
+      const summoner = (await this.rarity.next_summoner()).toNumber();
+      await this.rarity.summon(classes.bard);
+      await this.attributes.point_buy(summoner, 8, 12, 12, 15, 8, 18);
+      await this.rarity.setVariable("level", { [summoner]: 2 });
+  
+      const skillPoints = Array(36).fill(0);
+      skillPoints[skills.perform] = 1;
+      await this.skills.set_skills(summoner, skillPoints);
+
+      const odds = utils.formatEther(await this.rarityOpenMicV2.odds(summoner));
+      expect(odds).to.be.eq('0.75');
+    }
+
+    {
+      const summoner = (await this.rarity.next_summoner()).toNumber();
+      await this.rarity.summon(classes.bard);
+      await this.attributes.point_buy(summoner, 8, 12, 12, 15, 8, 18);
+      await this.rarity.setVariable("level", { [summoner]: 2 });
+  
+      const skillPoints = Array(36).fill(0);
+      skillPoints[skills.perform] = 5;
+      await this.skills.set_skills(summoner, skillPoints);
+
+      const odds = utils.formatEther(await this.rarityOpenMicV2.odds(summoner));
+      expect(odds).to.be.eq('0.95');
+    }
+
+    {
+      const summoner = (await this.rarity.next_summoner()).toNumber();
+      await this.rarity.summon(classes.bard);
+      await this.attributes.point_buy(summoner, 8, 12, 12, 15, 8, 18);
+      await this.rarity.setVariable("level", { [summoner]: 2 });
+  
+      const skillPoints = Array(36).fill(0);
+      skillPoints[skills.perform] = 5;
+      await this.skills.set_skills(summoner, skillPoints);
+  
+      await this.theRarityForestV3.startResearch(summoner, 4);
+      await network.provider.send("evm_increaseTime", [4 * 24 * 60 * 60]);
+      await network.provider.send("evm_mine");
+      await this.theRarityForestV3.discover(summoner);
+  
+      const odds = utils.formatEther(await this.rarityOpenMicV2.odds(summoner));
+      expect(odds).to.be.eq('1.0');
+    }
   });
 
 });
