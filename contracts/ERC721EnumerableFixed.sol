@@ -17,9 +17,10 @@ interface IERC721 {
     function balanceOf(uint owner) external view returns (uint256 balance);
     function ownerOf(uint256 tokenId) external view returns (uint owner);
     function transferFrom(
+        uint operator,
         uint from,
         uint to,
-        uint256 tokenId
+        uint tokenId
     ) external;
     function approve(uint from, uint to, uint256 tokenId) external;
     function getApproved(uint256 tokenId) external view returns (uint operator);
@@ -86,12 +87,14 @@ contract ERC721 is IERC721 {
     }
 
     function transferFrom(
+        uint operator,
         uint from,
         uint to,
-        uint256 tokenId
+        uint tokenId
     ) public virtual override {
         //solhint-disable-next-line max-line-length
         require(_isApprovedOrOwnerOfSummoner(from), "ERC721: transfer caller is not owner nor approved");
+        require(_isApprovedOrOwner(operator, tokenId), "ERC721: transfer operator is not owner nor approved");
         _transfer(from, to, tokenId);
     }
 

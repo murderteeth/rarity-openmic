@@ -304,8 +304,8 @@ describe("rarityOpenMicV2", function () {
       const summoner2 = (await rarity.next_summoner()).toNumber();
       await rarity.summon(classes.bard);
 
-      const transferFrom = rarityOpenMicV2["transferFrom(uint256,uint256,uint256)"];
-      await expect(transferFrom(summoner, summoner2, tokenId)).to.be.reverted
+      await expect(rarityOpenMicV2.transferFrom(summoner, summoner, summoner2, tokenId)).to.be.reverted
+      await expect(this.rarityOpenMicV2.transferFrom(summoner, summoner, summoner2, tokenId)).to.not.be.reverted
     }
 
   });
