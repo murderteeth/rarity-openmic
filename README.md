@@ -40,6 +40,7 @@ Your bard rolls a Perform skill check with these outcomes:
 
 `RarityOpenMic.getPrizes(summoner)`
 
+`RarityOpenMic.odds(summoner)`
 
 ### Dev
 Setup like this
