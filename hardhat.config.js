@@ -28,7 +28,8 @@ module.exports = {
     },
     mainnet: {
       url: "https://rpc.ftm.tools",
-      accounts: [privateKey]
+      accounts: [privateKey],
+      timeout: 120_000
     }
   },
   etherscan: {
