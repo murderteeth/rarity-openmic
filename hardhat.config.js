@@ -17,7 +17,10 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      forking: {
+        url: "https://rpc.ftm.tools"
+      }
     },
     testnet: {
       url: "https://rpc.testnet.fantom.network/",
