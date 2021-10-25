@@ -343,6 +343,28 @@ describe("rarityOpenMicV2", function () {
 
   });
 
+  it("reverts remints for lots > 10", async function () {
+    await this.random.setMockResult(19);
+
+    const summoner = (await this.rarity.next_summoner()).toNumber();
+    await this.rarity.summon(classes.bard);
+    await this.attributes.point_buy(summoner, 8, 8, 12, 15, 12, 18);
+    await this.rarity.setVariable("level", { [summoner]: 2 });
+
+    const skillPoints = Array(36).fill(0);
+    skillPoints[skills.perform] = 5;
+    await this.skills.set_skills(summoner, skillPoints);
+    for(let i = 0; i < 15; i++) {
+      await this.rarityOpenMic.perform(summoner);
+      await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
+      await network.provider.send("evm_mine");
+    }
+
+    await expect(this.rarityOpenMicV2.remintV1Prizes(0, 1)).to.not.be.reverted;
+    await expect(this.rarityOpenMicV2.remintV1Prizes(2, 13)).to.be.reverted;
+
+  });
+
   it("reverts remints from non owner", async function () {
     await this.random.setMockResult(19);
 

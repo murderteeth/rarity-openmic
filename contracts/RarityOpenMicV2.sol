@@ -197,6 +197,7 @@ contract RarityOpenMicV2 is ERC721Enumerable {
 
   function remintV1Prizes(uint fromTokenId, uint toTokenId) public ownerOnly {
     require(v1RemintOpen, "Remint closed");
+    require(toTokenId - fromTokenId < 11, "Remint limited to lots fo 10");
     uint limit = toTokenId + 1;
     for (uint tokenId = fromTokenId; tokenId < limit; tokenId++) {
       uint summoner = openmicV1.ownerOf(tokenId);
