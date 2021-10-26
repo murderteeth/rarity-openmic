@@ -17,7 +17,10 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      forking: {
+        url: "https://rpc.ftm.tools"
+      }
     },
     testnet: {
       url: "https://rpc.testnet.fantom.network/",
@@ -25,7 +28,8 @@ module.exports = {
     },
     mainnet: {
       url: "https://rpc.ftm.tools",
-      accounts: [privateKey]
+      accounts: [privateKey],
+      timeout: 120_000
     }
   },
   etherscan: {
@@ -34,8 +38,10 @@ module.exports = {
   gasReporter: {
     excludeContracts: 
       ["rarity.sol", 
+      "rarity_xp_proxy",
       "theRarityForest.sol", 
       "theRarityForestV2.sol", 
+      "TheRarityForestV3",
       "codex_base_random_mockable.sol",
       "codex_skills.sol",
       "rarity_attributes.sol",

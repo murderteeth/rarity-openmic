@@ -16,26 +16,16 @@ interface IERC721 {
     event ApprovalForAll(uint indexed owner, uint indexed operator, bool approved);
     function balanceOf(uint owner) external view returns (uint256 balance);
     function ownerOf(uint256 tokenId) external view returns (uint owner);
-    function safeTransferFrom(
-        uint from,
-        uint to,
-        uint256 tokenId
-    ) external;
     function transferFrom(
+        uint operator,
         uint from,
         uint to,
-        uint256 tokenId
+        uint tokenId
     ) external;
     function approve(uint from, uint to, uint256 tokenId) external;
     function getApproved(uint256 tokenId) external view returns (uint operator);
     function setApprovalForAll(uint from, uint operator, bool _approved) external;
     function isApprovedForAll(uint owner, uint operator) external view returns (bool);
-    function safeTransferFrom(
-        uint from,
-        uint to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external;
 }
 
 contract ERC721 is IERC721 {
@@ -97,62 +87,14 @@ contract ERC721 is IERC721 {
     }
 
     function transferFrom(
+        uint operator,
         uint from,
         uint to,
-        uint256 tokenId
+        uint tokenId
     ) public virtual override {
         //solhint-disable-next-line max-line-length
-        uint sender = uint256(uint160(address(msg.sender)));
-        require(_isApprovedOrOwner(sender, tokenId), "ERC721: transfer caller is not owner nor approved");
-        _transfer(from, to, tokenId);
-    }
-
-    function safeTransferFrom(
-        uint from,
-        uint to,
-        uint256 tokenId
-    ) public virtual override {
-        require(_isApprovedOrOwner(from, tokenId), "ERC721: transfer caller is not owner nor approved");
-        safeTransferFrom(from, to, tokenId, "");
-    }
-
-    /**
-     * @dev See {IERC721-safeTransferFrom}.
-     */
-    function safeTransferFrom(
-        uint from,
-        uint to,
-        uint256 tokenId,
-        bytes memory _data
-    ) public virtual override {
-        require(_isApprovedOrOwner(from, tokenId), "ERC721: transfer caller is not owner nor approved");
-        _safeTransfer(from, to, tokenId, _data);
-    }
-
-    /**
-     * @dev Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
-     * are aware of the ERC721 protocol to prevent tokens from being forever locked.
-     *
-     * `_data` is additional data, it has no specified format and it is sent in call to `to`.
-     *
-     * This internal function is equivalent to {safeTransferFrom}, and can be used to e.g.
-     * implement alternative mechanisms to perform token transfer, such as signature-based.
-     *
-     * Requirements:
-     *
-     * - `from` cannot be the zero address.
-     * - `to` cannot be the zero address.
-     * - `tokenId` token must exist and be owned by `from`.
-     *
-     * Emits a {Transfer} event.
-     */
-    function _safeTransfer(
-        uint from,
-        uint to,
-        uint256 tokenId,
-        bytes memory _data
-    ) internal virtual {
-        require(_isApprovedOrOwnerOfSummoner(from), "not owner of summoner");
+        require(_isApprovedOrOwnerOfSummoner(from), "ERC721: transfer caller is not owner nor approved");
+        require(_isApprovedOrOwner(operator, tokenId), "ERC721: transfer operator is not owner nor approved");
         _transfer(from, to, tokenId);
     }
 
@@ -182,7 +124,7 @@ contract ERC721 is IERC721 {
     }
 
     function _isApprovedOrOwnerOfSummoner(uint _summoner) internal view returns (bool) {
-        return rm.getApproved(_summoner) == msg.sender || rm.ownerOf(_summoner) == msg.sender;
+        return rm.getApproved(_summoner) == msg.sender || rm.ownerOf(_summoner) == msg.sender || rm.isApprovedForAll(rm.ownerOf(_summoner), msg.sender);
     }
 
     /**

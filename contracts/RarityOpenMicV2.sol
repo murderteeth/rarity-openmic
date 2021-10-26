@@ -1,81 +1,60 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.7;
 
-import "./ERC721Enumerable.sol";
+import "./ERC721EnumerableFixed.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./Interfaces.sol";
 
-interface iRarity {
-  function summoner(uint id) external view returns (uint _xp, uint _log, uint _class, uint _level);
-  function ownerOf(uint256 tokenId) external view returns (address owner);
-  function getApproved(uint256 tokenId) external view returns (address);
-  function isApprovedForAll(address owner, address operator) external view returns (bool);
-}
+contract RarityOpenMicV2 is ERC721Enumerable {
 
-interface iAttributes {
-  function ability_scores(uint) external view returns (uint32, uint32, uint32, uint32, uint32, uint32);
-}
-
-interface iSkills {
-  function get_skills(uint summoner) external view returns (uint8[36] memory);
-}
-
-interface iCodexBaseRandom {
-  function dn(uint summoner, uint n) external view returns (uint);
-}
-
-struct ForestTreasure {
-  uint256 summonerId;
-  uint256 treasureId;
-  string itemName;
-  uint256 magic;
-  uint256 level;
-}
-
-interface iForest {
-  function getTreasuresBySummoner(uint256 summonerId) external view returns (ForestTreasure[] memory);
-}
-
-contract RarityOpenMic is ERC721Enumerable {
-
+  address public owner;
   using Counters for Counters.Counter;
 
-  constructor(address _rarity, address _attributes, address _skills, address _codex_base_random, address _forest) ERC721(_rarity) {
-    rarity = iRarity(_rarity);
-    attributes = iAttributes(_attributes);
-    skills = iSkills(_skills);
-    random = iCodexBaseRandom(_codex_base_random);
-    forest = iForest(_forest);
+  constructor(address _rarity, address _attributes, address _skills, address _codex_base_random, address _forest, address _openmicV1) ERC721(_rarity) {
+    owner = msg.sender;
+    rarity = IRarity(_rarity);
+    attributes = IAttributes(_attributes);
+    skills = ISkills(_skills);
+    random = ICodexBaseRandom(_codex_base_random);
+    forest = IForest(_forest);
+    openmicV1 = IOpenMicV1(_openmicV1);
+  }
+
+  modifier ownerOnly {
+    require(msg.sender == owner);
+    _;
   }
 
   event Perform(address indexed sender, uint summoner, int check, bool success, bool crit);
   event PrizeAwarded(uint summoner, uint tokenId);
 
-  string constant public name = "RarityOpenMic";
-  string constant public symbol = "ROM";
+  string constant public name = "RarityOpenMicV2";
+  string constant public symbol = "ROMv2";
   uint constant public difficultyClass = 10;
   uint constant public intermission = 7 days;
   uint constant public perform_skill = 22;
 
-  iRarity immutable public rarity;
-  iAttributes immutable public attributes;
-  iSkills immutable public skills;
-  iCodexBaseRandom immutable public random;
-  iForest immutable public forest;
+  IRarity immutable public rarity;
+  IAttributes immutable public attributes;
+  ISkills immutable public skills;
+  ICodexBaseRandom immutable public random;
+  IForest immutable public forest;
+  IOpenMicV1 immutable public openmicV1;
   Counters.Counter public tokenCounter;
 
   string[] public doorPrizes = [
-    "Signet ring of the Hawk",
-    "Signet ring of the Badger",
-    "Signet ring of the Song Bird",
-    "Signet ring of the Skunk",
-    "Signet ring of the Cat",
-    "Signet ring of the Dog",
-    "Signet ring of the Fish",
-    "Signet ring of the Shark",
-    "Signet ring of the Lion",
-    "Signet ring of the Tiger",
-    "Signet ring of the Snake",
-    "Crate of Goblin Wine",
+    "Hawk signet ring",
+    "Badger signet ring",
+    "Song Bird signet ring",
+    "Skunk signet ring",
+    "Cat signet ring",
+    "Dog signet ring",
+    "Fish signet ring",
+    "Shark signet ring",
+    "Lion signet ring",
+    "Tiger signet ring",
+    "Snake signet ring",
+    "Crate of goblin wine",
     "Expired rations",
     "Mysterious black stone"
   ];
@@ -92,23 +71,6 @@ contract RarityOpenMic is ERC721Enumerable {
 
   function getRarePrizes() public view returns (string[] memory) {
     return rarePrizes;
-  }
-
-  struct Performance {
-    uint blockTime;
-    bool success;
-  }
-
-  struct Prize {
-    bool rare;
-    uint index;
-  }
-
-  struct PrizeView {
-    uint tokenId;
-    bool rare;
-    uint index;
-    string name;
   }
 
   mapping(uint => Performance) performances;
@@ -128,17 +90,21 @@ contract RarityOpenMic is ERC721Enumerable {
     }
   }
 
+  function getPrize(uint tokenId) public view returns (PrizeView memory) {
+    Prize memory prize = tokens[tokenId];
+    if(prize.rare) {
+      return PrizeView(tokenId, true, prize.index, rarePrizes[prize.index]);
+    } else {
+      return PrizeView(tokenId, false, prize.index, doorPrizes[prize.index]);
+    }
+  }
+
   function getPrizes(uint summoner) public view returns (PrizeView[] memory) {
     uint arrayLength = balanceOf(summoner);
     PrizeView[] memory result = new PrizeView[](arrayLength);
     for (uint i = 0; i < arrayLength; i++) {
       uint tokenId = tokenOfOwnerByIndex(summoner, i);
-      Prize memory prize = tokens[tokenId];
-      if(prize.rare) {
-        result[i] = PrizeView(tokenId, true, prize.index, rarePrizes[prize.index]);
-      } else {
-        result[i] = PrizeView(tokenId, false, prize.index, doorPrizes[prize.index]);
-      }
+      result[i] = getPrize(tokenId);
     }
     return result;
   }
@@ -157,7 +123,7 @@ contract RarityOpenMic is ERC721Enumerable {
     performances[summoner] = Performance(block.timestamp, success);
     emit Perform(msg.sender, summoner, check, success, crit);
 
-    if(success) {
+    if(success && !crit) {
       uint tokenId = safeMint(summoner);
       uint random = uint(keccak256(abi.encodePacked(block.timestamp, tokenId)));
       uint prize = uint16(random % doorPrizes.length);
@@ -175,10 +141,22 @@ contract RarityOpenMic is ERC721Enumerable {
 
   }
 
-  function safeMint(uint to) internal returns (uint tokenId) {
-    tokenId = tokenCounter.current();
-    _safeMint(to, tokenId, "");
-    tokenCounter.increment();
+  function odds(uint summoner) public view returns (int) {
+    (,,uint class,uint level) = rarity.summoner(summoner);
+    if(class != 2) return (0);
+    if(level < 2) return (0);
+
+    int performSkill = int(uint(skills.get_skills(summoner)[perform_skill]));
+    if(performSkill < 1) return (0);
+
+    (,,,,,uint CHA) = attributes.ability_scores(summoner);
+    int bonus = performSkill + calcModifier(CHA) + int(calcForestModifier(summoner));
+    int d = 20;
+    int upperBound = 10e17;
+    int actual = 10e17 * (int(difficultyClass) + bonus) / d;
+
+    if(actual > upperBound) return (upperBound);
+    return (actual);
   }
 
   function skillCheck(uint summoner, uint dc, uint skill) internal view returns (int check, bool success, bool crit) {
@@ -225,6 +203,35 @@ contract RarityOpenMic is ERC721Enumerable {
     address spender = address(this);
     address owner = rarity.ownerOf(summoner);
     return (owner == sender || rarity.getApproved(summoner) == spender || rarity.isApprovedForAll(owner, spender));
+  }
+
+  function safeMint(uint to) internal returns (uint tokenId) {
+    tokenId = tokenCounter.current();
+    _safeMint(to, tokenId, "");
+    tokenCounter.increment();
+  }
+
+  bool public v1RemintOpen = true;
+
+  function remintV1Prizes(uint fromTokenId, uint toTokenId) public ownerOnly {
+    require(v1RemintOpen, "Remint closed");
+    require(toTokenId - fromTokenId < 11, "Remint limited to lots fo 10");
+    uint limit = toTokenId + 1;
+    for (uint tokenId = fromTokenId; tokenId < limit; tokenId++) {
+      uint summoner = openmicV1.ownerOf(tokenId);
+      PrizeView[] memory prizes = openmicV1.getPrizes(summoner);
+      for (uint p = 0; p < prizes.length; p++) {
+        PrizeView memory prize = prizes[p];
+        if(prize.tokenId == tokenId) {
+          uint newTokenId = safeMint(summoner);
+          tokens[newTokenId] = Prize(prize.rare, prize.index);
+        }
+      }
+    }
+  }
+
+  function closeV1Remint() public ownerOnly {
+    v1RemintOpen = false;
   }
 
   function tokenURI(uint256 tokenId) public view returns (string memory) {

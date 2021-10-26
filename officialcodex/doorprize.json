@@ -1,0 +1,114 @@
+[
+  {
+    "id": "1",
+    "class": "Goods",
+    "name": "Hawk signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "2",
+    "class": "Goods",
+    "name": "Badger signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "3",
+    "class": "Goods",
+    "name": "Song Bird signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "4",
+    "class": "Goods",
+    "name": "Skunk signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "5",
+    "class": "Goods",
+    "name": "Cat signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "6",
+    "class": "Goods",
+    "name": "Dog signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "7",
+    "class": "Goods",
+    "name": "Fish signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "8",
+    "class": "Goods",
+    "name": "Shark signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "9",
+    "class": "Goods",
+    "name": "Lion signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "10",
+    "class": "Goods",
+    "name": "Tiger signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "11",
+    "class": "Goods",
+    "name": "Snake signet ring",
+    "description": "A common signet ring",
+    "cost": 5,
+    "weight": 0
+  },
+  {
+    "id": "12",
+    "class": "Goods",
+    "name": "Crate of goblin wine",
+    "description": "A crate of the liquid foulness",
+    "cost": 1,
+    "weight": 5
+  },
+  {
+    "id": "13",
+    "class": "Goods",
+    "name": "Expired rations",
+    "description": "This was a tidy meal once",
+    "cost": 0,
+    "weight": 1
+  },
+  {
+    "id": "14",
+    "class": "Goods",
+    "name": "Mysterious black stone",
+    "description": "This stone seems lost...",
+    "cost": 5,
+    "weight": 2
+  }
+]
