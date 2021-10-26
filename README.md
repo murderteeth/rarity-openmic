@@ -2,7 +2,9 @@
 
 Rarity Open Mic is an expansion for [rarity](https://github.com/andrecronje/rarity/).
 
-[Rarity Open Mic Contract @ FTMScan](https://ftmscan.com/address/0x46Fe9AAd56f486950ed3732A91552e3919e5713F#code)
+[Rarity Open Mic V2 @ FTMScan](https://ftmscan.com/address/0x29d51E8736FCC8C2662aA1B2cf46753d5918606F#code)
+
+[Rarity Open Mic V1 @ FTMScan ** VULNERABLE DO NOT USE **](https://ftmscan.com/address/0x46Fe9AAd56f486950ed3732A91552e3919e5713F#code)
 
 ![Rarity Open Mic](https://cdn.arstechnica.net/wp-content/uploads/2018/03/BardsTaletavern-800x450.jpg)
 
@@ -11,7 +13,7 @@ A lithe, robed figure takes the stage with a flourish. The bard sings out and a 
 Your bard rolls a Perform skill check with these outcomes:
 - Fail the DC, booed off the stage, your bard gets no prize
 - Make the DC, the tavern cheers politely, your bard gets a door prize
-- Roll a nat20, the tavern is an orgy of good vibes, your bard gets a door prize and a secret mission pass
+- Roll a nat20, the tavern is an orgy of good vibes, your bard gets a secret missionz pass
 
 ### Requirements
 - Your summoner must be a [Bard](https://rarity.fandom.com/wiki/Bard) to perform
@@ -74,5 +76,4 @@ npx hardhat run scripts/deploy.js --network testnet
 Version one of Open Mic had a vulnerability that would allow arbitrary transfer of prizes between summoners:
 https://github.com/murderteeth/rarity-openmic/blob/3137bda0efded0eec35f1d0ac63e5e5dabb4bc26/contracts/ERC721Enumerable.sol#L105
 
-This vulnerability was not exploited and the vulnerable function has been removed. All V1 prizes will be reminted by manually calling this v2 function:
-
+This vulnerability was not exploited and the vulnerable function has been removed in V2. All V1 prizes will be reminted by manually calling v2's remint function.
